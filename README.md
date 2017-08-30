@@ -31,12 +31,12 @@ The `tmpl.yml` file is how you can define the options that will be used when gen
 # `prompts` is a list of all of the parameters that
 # will be required when building form this template
 prompts:
-  # create one key per parameter. In this case, you
+  # create one object per parameter. In this case, you
   # will be have access to the `name` and `monitoring_needed`
   # fields for your template files.
-  name:
+  - name: name
     description: Please enter your name
-  monitoring_needed:
+  - name: monitoring_needed
     description: Do you need New Relic monitoring?
     # you can specify the type of the parameter.
     # currently, only string and bool are supported.
