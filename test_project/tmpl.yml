@@ -1,0 +1,18 @@
+prompts:
+  - name: conditionalFolder1
+    description: conditionalFolder1
+    type: bool
+  - name: conditionalFolder2
+    description: conditionalFolder2
+    type: bool
+  - name: conditionalFile1
+    description: conditionalFile1
+    type: bool
+  - name: projName
+    description: projName
+    type: string
+  - name: variable1
+    description: variable1
+  - name: variable2
+    description: variable2
+  

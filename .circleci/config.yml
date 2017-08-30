@@ -6,9 +6,10 @@ jobs:
     working_directory: /go/src/github.com/stevenmatthewt/template
     steps:
       - checkout
-      - run: 
-          name: Build
-          command: go build -v ./cmd/cli
+      - run:
+          name: Unit tests
+          command: |
+            go test -v ./...
       - run: 
           name: Fmt
           command: go fmt ./...
@@ -16,9 +17,19 @@ jobs:
           name: Vet
           command: go vet ./... 
       - run:
-          name: Unit tests
+          name: Functional test
           command: |
-            go test -v $(go list ./... | grep -v /vendor) 
+            go run cmd/cli/main.go    \
+            --template=./test_project \
+            --destination=test_output \
+            <<EOF
+            yes
+            No
+            Y
+            projectTest
+            var1
+            var2
+            EOF
 
 workflows:
   version: 2
