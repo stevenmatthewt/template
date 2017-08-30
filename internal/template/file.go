@@ -11,14 +11,20 @@ import (
 )
 
 func (t Templater) templateFile(path string) error {
-	destPath := filepath.Join(t.destination, path)
-	contents, err := t.readFile(path)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %s", err)
+	templatedPath, err := t.finalPath(path)
+	if templatedPath == "" {
+		return nil
 	}
-	if strings.HasSuffix(path, ".tmpl") {
+	sourcePath := filepath.Join(t.source, path)
+	destPath := filepath.Join(t.destination, templatedPath)
+
+	contents, err := t.readFile(sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %s", err)
+	}
+	if strings.HasSuffix(sourcePath, ".tmpl") {
 		destPath = destPath[:len(destPath)-5]
-		contents, err = parseTemplate(path, t.data)
+		contents, err = parseTemplateFile(sourcePath, t.data)
 		if err != nil {
 			return fmt.Errorf("failed to apply template to file: %s", err)
 		}
@@ -28,7 +34,7 @@ func (t Templater) templateFile(path string) error {
 	defer file.Close()
 	_, err = file.Write(contents)
 	if err != nil {
-		return fmt.Errorf("failed to write to file: %s", err)
+		return fmt.Errorf("failed to write to file: %s -- %s", destPath, err)
 	}
 
 	return nil
@@ -43,7 +49,7 @@ func (t Templater) readFile(path string) (contents []byte, err error) {
 	return contents, nil
 }
 
-func parseTemplate(templatePath string, data interface{}) (result []byte, err error) {
+func parseTemplateFile(templatePath string, data interface{}) (result []byte, err error) {
 	t, err := template.ParseFiles(templatePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template: %s", err)

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strconv"
 
 	"github.com/segmentio/go-prompt"
 	"github.com/stevenmatthewt/template/internal/template"
-	"github.com/stevenmatthewt/template/internal/walk"
 	"gopkg.in/yaml.v2"
 )
 
@@ -25,6 +25,7 @@ type Prompt struct {
 	Description string `yaml:"description"`
 	Required    bool   `yaml:"required"`
 	Default     string `yaml:"default"`
+	Type        string `yaml:"type"`
 }
 
 func main() {
@@ -34,9 +35,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	templateData := getTemplateData(config)
-	fn := template.New(flags.DestinationPath, templateData)
-	walk.Walk(flags.TemplatePath, fn)
+	templateData, err := getTemplateData(config)
+	if err != nil {
+		panic(err)
+	}
+	fn := template.New(flags.TemplatePath, flags.DestinationPath, templateData)
+	err = fn.Walk(flags.TemplatePath, fn)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func getFlags() (flags CLIFlags) {
@@ -61,11 +68,41 @@ func getConfig(path string) (config Config, err error) {
 	return config, nil
 }
 
-func getTemplateData(config Config) map[string]interface{} {
+func getTemplateData(config Config) (map[string]interface{}, error) {
+	var err error
 	data := make(map[string]interface{})
 	for name, p := range config.Prompts {
-		data[name] = prompt.String(p.Description)
+		input := prompt.String(p.Description)
+		switch p.Type {
+		case "bool":
+			boolMap := map[string]bool{
+				"true":  true,
+				"True":  true,
+				"false": false,
+				"False": false,
+				"Y":     true,
+				"N":     false,
+				"y":     true,
+				"n":     false,
+				"Yes":   true,
+				"No":    false,
+			}
+			var ok bool
+			data[name], ok = boolMap[input]
+			if !ok {
+				return nil, fmt.Errorf("input is not recognized as a boolean: %s", input)
+			}
+		case "string":
+			data[name] = input
+		case "":
+			data[name] = input
+		case "int":
+			data[name], err = strconv.Atoi(input)
+			if err != nil {
+				return nil, fmt.Errorf("input is not recognized as an integer: %s", input)
+			}
+		}
 	}
 
-	return data
+	return data, nil
 }
